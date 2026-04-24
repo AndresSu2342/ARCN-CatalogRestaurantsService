@@ -1,0 +1,276 @@
+### Ejemplos de Solicitudes HTTP para el Microservicio de Catálogo de Restaurantes
+
+# ============================================
+# 1. OPERACIONES CON RESTAURANTES
+# ============================================
+
+### 1.1 Crear un nuevo restaurante
+POST http://localhost:8081/api/v1/restaurantes
+Content-Type: application/json
+
+{
+  "nombre": "Pizzería Roma",
+  "descripcion": "Auténtica pizza italiana con horno de leña",
+  "direccion": "Via Roma 123, Apt 4",
+  "latitud": 40.7128,
+  "longitud": -74.0060,
+  "telefono": "+1-555-0101",
+  "email": "info@pizzeriaroma.com",
+  "horaApertura": "11:00:00",
+  "horaCierre": "23:00:00",
+  "calificacion": 4.5,
+  "numeroResenas": 150,
+  "imagen": "https://example.com/pizzeria-roma.jpg",
+  "categorias": ["Italiana", "Pizza", "Comida Rápida"],
+  "activo": true
+}
+
+### 1.2 Obtener todos los restaurantes
+GET http://localhost:8081/api/v1/restaurantes
+Content-Type: application/json
+
+### 1.3 Obtener restaurante por ID
+GET http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439011
+Content-Type: application/json
+
+### 1.4 Actualizar un restaurante
+PUT http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439011
+Content-Type: application/json
+
+{
+  "nombre": "Pizzería Roma - Actualizado",
+  "descripcion": "Auténtica pizza italiana con horno de leña - 20 años de experiencia",
+  "direccion": "Via Roma 123, Apt 4",
+  "latitud": 40.7128,
+  "longitud": -74.0060,
+  "telefono": "+1-555-0101",
+  "email": "info@pizzeriaroma.com",
+  "horaApertura": "10:00:00",
+  "horaCierre": "23:30:00",
+  "calificacion": 4.7,
+  "numeroResenas": 200,
+  "categorias": ["Italiana", "Pizza", "Comida Rápida", "Reservaciones"]
+}
+
+### 1.5 Desactivar un restaurante (borrado lógico)
+DELETE http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439011
+
+### 1.6 Buscar restaurantes por nombre
+GET http://localhost:8081/api/v1/restaurantes/nombre/Roma
+Content-Type: application/json
+
+### 1.7 Buscar restaurantes por categoría
+GET http://localhost:8081/api/v1/restaurantes/categoria/Italiana
+Content-Type: application/json
+
+# ============================================
+# 2. BÚSQUEDA GEOLOCALIZADA DE RESTAURANTES
+# ============================================
+
+### 2.1 Buscar restaurantes cercanos (Caso de uso principal)
+POST http://localhost:8081/api/v1/restaurantes/buscar
+Content-Type: application/json
+
+{
+  "latitudUsuario": 40.7150,
+  "longitudUsuario": -74.0030,
+  "radioKm": 5.0,
+  "hora": "12:30:00",
+  "categoria": "Italiana",
+  "calificacionMinima": 4.0
+}
+
+### 2.2 Búsqueda sin filtros de categoría
+POST http://localhost:8081/api/v1/restaurantes/buscar
+Content-Type: application/json
+
+{
+  "latitudUsuario": 40.7150,
+  "longitudUsuario": -74.0030,
+  "radioKm": 3.0
+}
+
+### 2.3 Búsqueda con radio mayor
+POST http://localhost:8081/api/v1/restaurantes/buscar
+Content-Type: application/json
+
+{
+  "latitudUsuario": 40.7100,
+  "longitudUsuario": -74.0100,
+  "radioKm": 10.0,
+  "calificacionMinima": 4.2
+}
+
+# ============================================
+# 3. OPERACIONES CON MENÚ DE PRODUCTOS
+# ============================================
+
+### 3.1 Obtener el menú completo de un restaurante
+GET http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439011/menu
+Content-Type: application/json
+
+### 3.2 Agregar un producto al menú
+POST http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439011/menu
+Content-Type: application/json
+
+{
+  "nombre": "Pizza Margherita",
+  "descripcion": "Pizza clásica con tomate, mozzarella fresca y albahaca",
+  "precio": 10.99,
+  "disponible": true,
+  "categoria": "Pizza",
+  "tiempoPreparacion": 20,
+  "imagen": "https://example.com/pizza-margherita.jpg"
+}
+
+### 3.3 Agregar otro producto
+POST http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439011/menu
+Content-Type: application/json
+
+{
+  "nombre": "Pasta Carbonara",
+  "descripcion": "Auténtica pasta a la carbonara con panceta y huevo",
+  "precio": 14.50,
+  "disponible": true,
+  "categoria": "Pasta",
+  "tiempoPreparacion": 15,
+  "imagen": "https://example.com/pasta-carbonara.jpg"
+}
+
+### 3.4 Agregar producto con precio especial
+POST http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439011/menu
+Content-Type: application/json
+
+{
+  "nombre": "Ravioli de Ricota y Espinaca",
+  "descripcion": "Ravioli casero relleno de ricota fresca y espinaca",
+  "precio": 16.99,
+  "disponible": true,
+  "categoria": "Pasta",
+  "tiempoPreparacion": 18
+}
+
+# ============================================
+# 4. PRUEBAS DE VALIDACIÓN
+# ============================================
+
+### 4.1 Intentar crear restaurante sin datos requeridos
+POST http://localhost:8081/api/v1/restaurantes
+Content-Type: application/json
+
+{
+  "descripcion": "Falta el nombre"
+}
+
+### 4.2 Intentar crear restaurante con coordenadas inválidas
+POST http://localhost:8081/api/v1/restaurantes
+Content-Type: application/json
+
+{
+  "nombre": "Restaurante Test",
+  "direccion": "Calle Test",
+  "latitud": 999.0,
+  "longitud": -999.0,
+  "horaApertura": "11:00:00",
+  "horaCierre": "23:00:00"
+}
+
+### 4.3 Intentar agregar producto sin nombre
+POST http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439011/menu
+Content-Type: application/json
+
+{
+  "descripcion": "Producto sin nombre",
+  "precio": 10.0
+}
+
+### 4.4 Intentar buscar con radio negativo
+POST http://localhost:8081/api/v1/restaurantes/buscar
+Content-Type: application/json
+
+{
+  "latitudUsuario": 40.7150,
+  "longitudUsuario": -74.0030,
+  "radioKm": -5.0
+}
+
+# ============================================
+# 5. CASOS DE USO COMPLEJOS
+# ============================================
+
+### 5.1 Flujo completo: Crear restaurante + Agregar menú + Buscar
+# Paso 1: Crear restaurante
+POST http://localhost:8081/api/v1/restaurantes
+Content-Type: application/json
+
+{
+  "nombre": "Comida China Express",
+  "descripcion": "Auténtica comida china, entrega rápida",
+  "direccion": "Avenida Comercial 456",
+  "latitud": 40.7180,
+  "longitud": -74.0020,
+  "telefono": "+1-555-0202",
+  "email": "info@chinaexpress.com",
+  "horaApertura": "11:30:00",
+  "horaCierre": "22:30:00",
+  "categorias": ["China", "Asiática", "Comida Rápida"],
+  "activo": true
+}
+
+# Obtener el ID del restaurante creado (ej: 507f1f77bcf86cd799439012)
+
+# Paso 2: Agregar productos al menú
+POST http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439012/menu
+Content-Type: application/json
+
+{
+  "nombre": "Arroz Frito con Pollo",
+  "descripcion": "Arroz frito con trozos de pollo, huevo y verduras",
+  "precio": 9.50,
+  "disponible": true,
+  "categoria": "Arroces",
+  "tiempoPreparacion": 15
+}
+
+POST http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439012/menu
+Content-Type: application/json
+
+{
+  "nombre": "Chow Mein",
+  "descripcion": "Fideos con verduras y proteína a elección",
+  "precio": 10.99,
+  "disponible": true,
+  "categoria": "Fideos",
+  "tiempoPreparacion": 15
+}
+
+# Paso 3: Buscar restaurantes cerca del nuevo restaurante
+POST http://localhost:8081/api/v1/restaurantes/buscar
+Content-Type: application/json
+
+{
+  "latitudUsuario": 40.7180,
+  "longitudUsuario": -74.0020,
+  "radioKm": 2.0,
+  "categoria": "Asiática"
+}
+
+# ============================================
+# 6. EJEMPLOS CON CURL (Línea de comandos)
+# ============================================
+
+# Crear restaurante
+# curl -X POST http://localhost:8081/api/v1/restaurantes \
+#   -H "Content-Type: application/json" \
+#   -d '{"nombre":"Test","direccion":"Test","latitud":40.7128,"longitud":-74.0060,"horaApertura":"11:00:00","horaCierre":"23:00:00"}'
+
+# Obtener todos
+# curl http://localhost:8081/api/v1/restaurantes
+
+# Buscar cercanos
+# curl -X POST http://localhost:8081/api/v1/restaurantes/buscar \
+#   -H "Content-Type: application/json" \
+#   -d '{"latitudUsuario":40.7150,"longitudUsuario":-74.0030,"radioKm":5.0}'
+
+# Obtener menú
+# curl http://localhost:8081/api/v1/restaurantes/507f1f77bcf86cd799439011/menu
