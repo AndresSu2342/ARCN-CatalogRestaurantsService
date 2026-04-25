@@ -249,4 +249,47 @@ class MapperServiceTest {
         assertNull(mapperService.convertirADTO((Producto) null));
         assertNull(mapperService.convertirAEntidad((ProductoDTO) null));
     }
+
+    @Test
+    void testConvertirMenuAEntidadWithEmptyList() {
+        // Arrange
+        restauranteDTO.setMenu(Collections.emptyList());
+        
+        // Act
+        Restaurante resultado = mapperService.convertirAEntidad(restauranteDTO);
+        
+        // Assert
+        assertNotNull(resultado);
+        assertNotNull(resultado.getMenu());
+        assertTrue(resultado.getMenu().isEmpty());
+    }
+
+    @Test
+    void testConvertirMenuAEntidadWithNullList() {
+        // Arrange
+        restauranteDTO.setMenu(null);
+        
+        // Act
+        Restaurante resultado = mapperService.convertirAEntidad(restauranteDTO);
+        
+        // Assert
+        assertNotNull(resultado);
+        assertNotNull(resultado.getMenu());
+        assertTrue(resultado.getMenu().isEmpty());
+    }
+
+    @Test
+    void testConvertirMenuAEntidadWithValidElements() {
+        // Arrange
+        restauranteDTO.setMenu(List.of(productoDTO));
+        
+        // Act
+        Restaurante resultado = mapperService.convertirAEntidad(restauranteDTO);
+        
+        // Assert
+        assertNotNull(resultado);
+        assertNotNull(resultado.getMenu());
+        assertEquals(1, resultado.getMenu().size());
+        assertEquals(productoDTO.getNombre(), resultado.getMenu().get(0).getNombre());
+    }
 }

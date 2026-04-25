@@ -460,4 +460,127 @@ class RestauranteServiceImplTest {
         verify(restauranteRepository).findById(id);
         verify(mapperService, never()).convertirADTO(any(Restaurante.class));
     }
+
+    @Test
+    void testBuscarRestaurantesCercanosFiltersByHoraWhenMockedValido() {
+        // Arrange
+        BusquedaCriterios criteriosMock = mock(BusquedaCriterios.class);
+        when(criteriosMock.esValido()).thenReturn(true);
+        when(criteriosMock.getLatitudUsuario()).thenReturn(40.7128);
+        when(criteriosMock.getLongitudUsuario()).thenReturn(-74.0060);
+        when(criteriosMock.getRadioKm()).thenReturn(5.0);
+        when(criteriosMock.getHora()).thenReturn(null); // hora null
+        
+        when(restauranteRepository.findByActivo(true)).thenReturn(List.of(restaurante));
+        when(mapperService.convertirADTO(any(Restaurante.class))).thenReturn(restauranteDTO);
+
+        // Act
+        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criteriosMock);
+
+        // Assert
+        assertFalse(resultado.isEmpty());
+        verify(restauranteRepository).findByActivo(true);
+    }
+
+    @Test
+    void testBuscarRestaurantesCercanosFiltersByCategoriaWhenNull() {
+        // Arrange
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(40.7128)
+                .longitudUsuario(-74.0060)
+                .radioKm(5.0)
+                .hora(LocalTime.of(12, 0))
+                .categoria(null) // Null categoria
+                .build();
+        when(restauranteRepository.findByActivo(true)).thenReturn(List.of(restaurante));
+        when(mapperService.convertirADTO(any(Restaurante.class))).thenReturn(restauranteDTO);
+
+        // Act
+        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criterios);
+
+        // Assert
+        assertFalse(resultado.isEmpty());
+        verify(restauranteRepository).findByActivo(true);
+    }
+
+    @Test
+    void testBuscarRestaurantesCercanosFiltersByCategoriasNullInRestaurante() {
+        // Arrange
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(40.7128)
+                .longitudUsuario(-74.0060)
+                .radioKm(5.0)
+                .hora(LocalTime.of(12, 0))
+                .categoria("Italiana")
+                .build();
+        
+        restaurante.setCategorias(null); // Restaurante con categorias null
+        when(restauranteRepository.findByActivo(true)).thenReturn(List.of(restaurante));
+
+        // Act & Assert
+        assertThrows(RestauranteNoEncontradoException.class, () -> restauranteService.buscarRestaurantesCercanos(criterios));
+        verify(restauranteRepository).findByActivo(true);
+    }
+
+    @Test
+    void testBuscarRestaurantesCercanosFiltersByCalificacionMinimaWhenNull() {
+        // Arrange
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(40.7128)
+                .longitudUsuario(-74.0060)
+                .radioKm(5.0)
+                .hora(LocalTime.of(12, 0))
+                .calificacionMinima(null) // Null calificacion
+                .build();
+        when(restauranteRepository.findByActivo(true)).thenReturn(List.of(restaurante));
+        when(mapperService.convertirADTO(any(Restaurante.class))).thenReturn(restauranteDTO);
+
+        // Act
+        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criterios);
+
+        // Assert
+        assertFalse(resultado.isEmpty());
+        verify(restauranteRepository).findByActivo(true);
+    }
+
+    @Test
+    void testBuscarRestaurantesCercanosFiltersByCalificacionNullInRestaurante() {
+        // Arrange
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(40.7128)
+                .longitudUsuario(-74.0060)
+                .radioKm(5.0)
+                .hora(LocalTime.of(12, 0))
+                .calificacionMinima(4.0)
+                .build();
+        
+        restaurante.setCalificacion(null); // Restaurante con calificacion null
+        when(restauranteRepository.findByActivo(true)).thenReturn(List.of(restaurante));
+
+        // Act & Assert
+        assertThrows(RestauranteNoEncontradoException.class, () -> restauranteService.buscarRestaurantesCercanos(criterios));
+        verify(restauranteRepository).findByActivo(true);
+    }
+
+    @Test
+    void testBuscarRestaurantesCercanosIgnoresRestaurantesWithNullDistance() {
+        // Arrange
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(40.7128)
+                .longitudUsuario(-74.0060)
+                .radioKm(5.0)
+                .hora(LocalTime.of(12, 0))
+                .build();
+        
+        Restaurante mockRestaurante = mock(Restaurante.class);
+        when(mockRestaurante.isActivo()).thenReturn(true);
+        when(mockRestaurante.estaAbierto(any())).thenReturn(true);
+        when(mockRestaurante.calcularDistancia(any(), any())).thenReturn(null); // Distancia nula
+        
+        when(restauranteRepository.findByActivo(true)).thenReturn(List.of(mockRestaurante));
+
+        // Act & Assert
+        assertThrows(RestauranteNoEncontradoException.class, () -> restauranteService.buscarRestaurantesCercanos(criterios));
+        verify(restauranteRepository).findByActivo(true);
+    }
 }
