@@ -23,6 +23,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/restaurantes")
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 @Slf4j
 public class RestauranteController {
