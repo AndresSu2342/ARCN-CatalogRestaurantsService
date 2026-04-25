@@ -4,7 +4,7 @@ import arcn.catalog.model.Restaurante;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
-
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +41,12 @@ public interface RestauranteRepository extends MongoRepository<Restaurante, Stri
      */
     @Query("{ 'activo': true, 'calificacion': { $gte: ?0 } }")
     List<Restaurante> findByCalificacionMinima(Double calificacionMinima);
+    
+    /**
+     * Busca restaurantes abiertos a cierta hora
+     */
+    @Query("{ 'activo': true, 'horaApertura': { $lte: ?0 }, 'horaCierre': { $gte: ?0 } }")
+    List<Restaurante> findAbiertosEnHora(LocalTime hora);
     
     /**
      * Busca restaurante por email

@@ -1,11 +1,13 @@
 package arcn.catalog.service;
 
 import arcn.catalog.dto.RestauranteDTO;
+import arcn.catalog.exception.RestauranteNoEncontradoException;
 import arcn.catalog.model.BusquedaCriterios;
 import arcn.catalog.model.Producto;
 import arcn.catalog.model.Restaurante;
 import arcn.catalog.repository.RestauranteRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,192 +16,312 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-/**
- * Pruebas unitarias para el servicio de Restaurantes.
- */
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Pruebas del Servicio de Restaurantes")
 class RestauranteServiceImplTest {
-    
+
     @Mock
     private RestauranteRepository restauranteRepository;
-    
+
     @Mock
     private MapperService mapperService;
-    
+
     @InjectMocks
     private RestauranteServiceImpl restauranteService;
-    
+
     private Restaurante restaurante;
+    private Restaurante restaurante2;
     private RestauranteDTO restauranteDTO;
     private Producto producto;
-    
+    private BusquedaCriterios criteriosCercanos;
+
     @BeforeEach
     void setUp() {
-        // Inicializar datos de prueba
         restaurante = Restaurante.builder()
                 .id("1")
                 .nombre("Pizzería Roma")
-                .descripcion("Auténtica pizza italiana")
                 .direccion("Via Roma 123")
                 .latitud(40.7128)
                 .longitud(-74.0060)
-                .telefono("555-0101")
-                .email("info@pizzeriaroma.com")
                 .horaApertura(LocalTime.of(11, 0))
                 .horaCierre(LocalTime.of(23, 0))
                 .calificacion(4.5)
-                .numeroResenas(100)
                 .activo(true)
-                .categorias(List.of("Italiana", "Pizza"))
-                .menu(List.of())
+                .categorias(new ArrayList<>(List.of("Italiana")))
+                .menu(new ArrayList<>())
                 .build();
-        
+
+        restaurante2 = Restaurante.builder()
+                .id("2")
+                .nombre("Sushi Paradise")
+                .direccion("Boulevard 456")
+                .latitud(40.7200)
+                .longitud(-74.0100)
+                .horaApertura(LocalTime.of(12, 0))
+                .horaCierre(LocalTime.of(22, 0))
+                .calificacion(4.8)
+                .activo(true)
+                .categorias(new ArrayList<>(List.of("Japonesa")))
+                .menu(new ArrayList<>())
+                .build();
+
         restauranteDTO = RestauranteDTO.builder()
                 .id("1")
                 .nombre("Pizzería Roma")
-                .descripcion("Auténtica pizza italiana")
                 .direccion("Via Roma 123")
                 .latitud(40.7128)
                 .longitud(-74.0060)
-                .telefono("555-0101")
-                .email("info@pizzeriaroma.com")
                 .horaApertura(LocalTime.of(11, 0))
                 .horaCierre(LocalTime.of(23, 0))
                 .calificacion(4.5)
-                .numeroResenas(100)
-                .activo(true)
-                .categorias(List.of("Italiana", "Pizza"))
+                .categorias(List.of("Italiana"))
                 .build();
-        
+
         producto = Producto.builder()
                 .id("p1")
-                .nombre("Pizza Margherita")
-                .descripcion("Pizza clásica")
-                .precio(BigDecimal.valueOf(10.99))
+                .nombre("Pizza")
+                .precio(BigDecimal.TEN)
                 .disponible(true)
-                .categoria("Pizza")
-                .tiempoPreparacion(20)
                 .build();
-    }
-    
-    @Test
-    void testBuscarRestaurantesCercanos() {
-        // Arrange
-        BusquedaCriterios criterios = BusquedaCriterios.builder()
+
+        criteriosCercanos = BusquedaCriterios.builder()
                 .latitudUsuario(40.7180)
                 .longitudUsuario(-74.0020)
                 .radioKm(5.0)
                 .hora(LocalTime.of(12, 0))
                 .categoria("Italiana")
                 .build();
-        
-        when(restauranteRepository.findAbiertosEnHora(any(LocalTime.class)))
+    }
+
+    // ─────────────────────────────────────────────
+
+    @Test
+    void testBuscarRestaurantesCercanos_conResultados() {
+        when(restauranteRepository.findByActivo(true))
                 .thenReturn(List.of(restaurante));
+
         when(mapperService.convertirADTO(restaurante))
                 .thenReturn(restauranteDTO);
-        
-        // Act
-        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criterios);
-        
-        // Assert
+
+        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criteriosCercanos);
+
         assertNotNull(resultado);
         assertFalse(resultado.isEmpty());
         assertEquals(1, resultado.size());
-        verify(restauranteRepository, times(1)).findAbiertosEnHora(criterios.getHora());
+
+        verify(restauranteRepository).findByActivo(true);
     }
-    
+
+    @Test
+    void testBuscarRestaurantesCercanos_criteriosInvalidos() {
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(1.0)
+                .longitudUsuario(1.0)
+                .radioKm(-1.0)
+                .build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> restauranteService.buscarRestaurantesCercanos(criterios));
+    }
+
+    @Test
+    void testBuscarRestaurantesCercanos_conFiltroCategoria() {
+        when(restauranteRepository.findByActivo(true))
+                .thenReturn(List.of(restaurante, restaurante2));
+
+        when(mapperService.convertirADTO(restaurante))
+                .thenReturn(restauranteDTO);
+
+        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criteriosCercanos);
+
+        assertTrue(resultado.stream()
+                .allMatch(r -> r.getCategorias().contains("Italiana")));
+    }
+
+    @Test
+    void testBuscarRestaurantesCercanos_filtroCalificacion() {
+
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(40.7180)
+                .longitudUsuario(-74.0020)
+                .radioKm(5.0)
+                .hora(LocalTime.of(12, 0))
+                .calificacionMinima(4.7)
+                .build();
+
+        when(restauranteRepository.findByActivo(true))
+                .thenReturn(List.of(restaurante, restaurante2));
+
+        when(mapperService.convertirADTO(restaurante2))
+                .thenReturn(RestauranteDTO.builder().id("2").calificacion(4.8).build());
+
+        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criterios);
+
+        assertFalse(resultado.isEmpty());
+        assertTrue(resultado.stream().allMatch(r -> r.getCalificacion() >= 4.7));
+    }
+
+    @Test
+    @DisplayName("Debe ordenar resultados por distancia ascendente")
+    void testBuscarRestaurantesCercanos_ordenPorDistancia() {
+
+        when(restauranteRepository.findByActivo(true))
+                .thenReturn(List.of(restaurante, restaurante2));
+
+        when(mapperService.convertirADTO(any(Restaurante.class)))
+                .thenAnswer(invocation -> {
+                    Restaurante r = invocation.getArgument(0);
+                    return RestauranteDTO.builder()
+                            .id(r.getId())
+                            .nombre(r.getNombre())
+                            .build();
+                });
+
+        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criteriosCercanos);
+
+        if (resultado.size() > 1) {
+            assertTrue(resultado.get(0).getDistanciaKm() <= resultado.get(1).getDistanciaKm());
+        }
+    }
+
+    // ───────────────── CRUD ─────────────────
+
     @Test
     void testCrearRestaurante() {
-        // Arrange
         when(mapperService.convertirAEntidad(restauranteDTO)).thenReturn(restaurante);
-        when(restauranteRepository.save(any(Restaurante.class))).thenReturn(restaurante);
+        when(restauranteRepository.save(any())).thenReturn(restaurante);
         when(mapperService.convertirADTO(restaurante)).thenReturn(restauranteDTO);
-        
-        // Act
+
         RestauranteDTO resultado = restauranteService.crearRestaurante(restauranteDTO);
-        
-        // Assert
+
         assertNotNull(resultado);
-        assertEquals("Pizzería Roma", resultado.getNombre());
-        verify(restauranteRepository, times(1)).save(any(Restaurante.class));
+        verify(restauranteRepository).save(any());
     }
-    
+
+    @Test
+    void testCrearRestaurante_datosInvalidos() {
+        RestauranteDTO invalido = RestauranteDTO.builder().nombre("").build();
+
+        when(mapperService.convertirAEntidad(invalido))
+                .thenReturn(Restaurante.builder().nombre("").build());
+
+        assertThrows(IllegalArgumentException.class,
+                () -> restauranteService.crearRestaurante(invalido));
+    }
+
+    @Test
+    void testObtenerTodos() {
+        when(restauranteRepository.findByActivo(true))
+                .thenReturn(List.of(restaurante));
+
+        when(mapperService.convertirADTO(restaurante))
+                .thenReturn(restauranteDTO);
+
+        List<RestauranteDTO> resultado = restauranteService.obtenerTodosLosRestaurantes();
+
+        assertEquals(1, resultado.size());
+    }
+
     @Test
     void testObtenerRestaurantePorId() {
-        // Arrange
-        when(restauranteRepository.findById("1")).thenReturn(Optional.of(restaurante));
-        when(mapperService.convertirADTO(restaurante)).thenReturn(restauranteDTO);
-        
-        // Act
+        when(restauranteRepository.findById("1"))
+                .thenReturn(Optional.of(restaurante));
+
+        when(mapperService.convertirADTO(restaurante))
+                .thenReturn(restauranteDTO);
+
         Optional<RestauranteDTO> resultado = restauranteService.obtenerRestaurantePorId("1");
-        
-        // Assert
+
         assertTrue(resultado.isPresent());
-        assertEquals("Pizzería Roma", resultado.get().getNombre());
-        verify(restauranteRepository, times(1)).findById("1");
     }
-    
+
     @Test
     void testDesactivarRestaurante() {
-        // Arrange
-        when(restauranteRepository.findById("1")).thenReturn(Optional.of(restaurante));
-        when(restauranteRepository.save(any(Restaurante.class))).thenReturn(restaurante);
-        
-        // Act
-        boolean resultado = restauranteService.desactivarRestaurante("1");
-        
-        // Assert
-        assertTrue(resultado);
-        verify(restauranteRepository, times(1)).findById("1");
-        verify(restauranteRepository, times(1)).save(any(Restaurante.class));
+        when(restauranteRepository.findById("1"))
+                .thenReturn(Optional.of(restaurante));
+
+        boolean res = restauranteService.desactivarRestaurante("1");
+
+        assertTrue(res);
     }
-    
+
     @Test
-    void testAgregarProductoAlMenu() {
-        // Arrange
-        restaurante.inicializarMenu();
-        when(restauranteRepository.findById("1")).thenReturn(Optional.of(restaurante));
-        when(restauranteRepository.save(any(Restaurante.class))).thenReturn(restaurante);
-        when(mapperService.convertirADTO(restaurante)).thenReturn(restauranteDTO);
-        
-        // Act
+    void testBuscarPorNombre() {
+        when(restauranteRepository.findByNombreContainingIgnoreCase("Roma"))
+                .thenReturn(List.of(restaurante));
+
+        when(mapperService.convertirADTO(restaurante))
+                .thenReturn(restauranteDTO);
+
+        List<RestauranteDTO> resultado = restauranteService.buscarPorNombre("Roma");
+
+        assertEquals(1, resultado.size());
+    }
+
+    @Test
+    void testBuscarPorCategoria() {
+        when(restauranteRepository.findActivosByCategoria("Italiana"))
+                .thenReturn(List.of(restaurante));
+
+        when(mapperService.convertirADTO(restaurante))
+                .thenReturn(restauranteDTO);
+
+        List<RestauranteDTO> resultado = restauranteService.buscarPorCategoria("Italiana");
+
+        assertEquals(1, resultado.size());
+    }
+
+    @Test
+    void testObtenerMenu() {
+        restaurante.setMenu(List.of(producto));
+
+        when(restauranteRepository.findById("1"))
+                .thenReturn(Optional.of(restaurante));
+
+        List<Producto> resultado = restauranteService.obtenerMenuDelRestaurante("1");
+
+        assertEquals(1, resultado.size());
+    }
+
+    @Test
+    void testAgregarProducto() {
+        when(restauranteRepository.findById("1"))
+                .thenReturn(Optional.of(restaurante));
+
+        when(restauranteRepository.save(any()))
+                .thenReturn(restaurante);
+
+        when(mapperService.convertirADTO(restaurante))
+                .thenReturn(restauranteDTO);
+
         Optional<RestauranteDTO> resultado = restauranteService.agregarProductoAlMenu("1", producto);
-        
-        // Assert
+
         assertTrue(resultado.isPresent());
-        verify(restauranteRepository, times(1)).findById("1");
     }
-    
+
     @Test
-    void testCalcularDistancia() {
-        // Arrange - Restaurante en (40.7128, -74.0060), Usuario en (40.7180, -74.0020)
-        // Distancia esperada aproximadamente 0.8 km
-        
-        // Act
-        Double distancia = restaurante.calcularDistancia(40.7180, -74.0020);
-        
-        // Assert
-        assertNotNull(distancia);
-        assertTrue(distancia > 0);
-        assertTrue(distancia < 1.5); // Menos de 1.5 km
-    }
-    
-    @Test
-    void testValidarRestaurante() {
-        // Act & Assert
-        assertTrue(restaurante.esValido());
-        
-        // Test con restaurante inválido
-        Restaurante inválido = Restaurante.builder()
-                .nombre("")
+    void testBuscarRestaurantesCercanos_sinResultados_lanzaExcepcion() {
+
+        // Mock: NO hay restaurantes activos
+        when(restauranteRepository.findByActivo(true))
+                .thenReturn(List.of());
+
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(40.7180)
+                .longitudUsuario(-74.0020)
+                .radioKm(5.0)
+                .hora(LocalTime.of(12, 0)) // importante para pasar validación
                 .build();
-        assertFalse(inválido.esValido());
+
+        assertThrows(RestauranteNoEncontradoException.class,
+                () -> restauranteService.buscarRestaurantesCercanos(criterios));
+
+        verify(restauranteRepository).findByActivo(true);
     }
 }

@@ -161,6 +161,11 @@
                 <configuration>
                     <source>17</source>
                     <target>17</target>
+                    <excludes>
+                        <exclude>arcn/catalog/config/**</exclude>
+                        <exclude>**/CatalogRestaurantsServiceApplication.class</exclude>
+                        
+                    </excludes>
                 </configuration>
             </plugin>
         </plugins>

@@ -30,13 +30,15 @@ public class RestauranteServiceImpl implements RestauranteService {
     public List<RestauranteDTO> buscarRestaurantesCercanos(BusquedaCriterios criterios) {
         if (!criterios.esValido()) {
             log.warn("Criterios de búsqueda inválidos: {}", criterios);
-            throw new IllegalArgumentException("Los criterios de búsqueda son inválidos: latitud, longitud, radio y hora son requeridos");
+            throw new IllegalArgumentException(
+                    "Los criterios de búsqueda son inválidos: latitud, longitud, radio y hora son requeridos");
         }
 
         log.info("Buscando restaurantes cercanos - Lat: {}, Lon: {}, Radio: {} km",
                 criterios.getLatitudUsuario(), criterios.getLongitudUsuario(), criterios.getRadioKm());
 
-        // Obtener restaurantes activos y filtrar horario en Java (MongoDB no compara LocalTime nativamente)
+        // Obtener restaurantes activos y filtrar horario en Java (MongoDB no compara
+        // LocalTime nativamente)
         List<Restaurante> candidatos = restauranteRepository.findByActivo(true);
 
         // Filtrar por horario de apertura en memoria
@@ -56,35 +58,37 @@ public class RestauranteServiceImpl implements RestauranteService {
         // Filtrar por calificación mínima
         if (criterios.getCalificacionMinima() != null && criterios.getCalificacionMinima() > 0) {
             candidatos = candidatos.stream()
-                    .filter(r -> r.getCalificacion() != null && r.getCalificacion() >= criterios.getCalificacionMinima())
+                    .filter(r -> r.getCalificacion() != null
+                            && r.getCalificacion() >= criterios.getCalificacionMinima())
                     .collect(Collectors.toList());
         }
 
         // Calcular distancia y filtrar por radio
         List<RestauranteDTO> resultado = candidatos.stream()
                 .map(r -> {
+                    Double distancia = r.calcularDistancia(
+                            criterios.getLatitudUsuario(),
+                            criterios.getLongitudUsuario());
+
+                    if (distancia == null)
+                        return null;
+
                     RestauranteDTO dto = mapperService.convertirADTO(r);
-                    Double distancia = r.calcularDistancia(criterios.getLatitudUsuario(), criterios.getLongitudUsuario());
                     dto.setDistanciaKm(distancia);
                     return dto;
                 })
+                .filter(dto -> dto != null && dto.getDistanciaKm() != null)
                 .filter(dto -> dto.getDistanciaKm() <= criterios.getRadioKm())
                 .sorted((r1, r2) -> r1.getDistanciaKm().compareTo(r2.getDistanciaKm()))
                 .collect(Collectors.toList());
 
-        // Problema del Event Storming: "Sin cobertura — ¿qué mostrar al user?"
+        log.info("Se encontraron {} restaurantes cercanos", resultado.size());
         if (resultado.isEmpty()) {
-            throw new RestauranteNoEncontradoException(
-                    String.format("Sin cobertura: no se encontraron restaurantes en un radio de %.1f km " +
-                            "para la ubicación [%.4f, %.4f]",
-                            criterios.getRadioKm(),
-                            criterios.getLatitudUsuario(),
-                            criterios.getLongitudUsuario())
-            );
+            throw new RestauranteNoEncontradoException("No se encontraron restaurantes cercanos");
         }
 
-        log.info("Se encontraron {} restaurantes cercanos", resultado.size());
         return resultado;
+
     }
 
     @Override
@@ -178,9 +182,7 @@ public class RestauranteServiceImpl implements RestauranteService {
                     restaurante.inicializarMenu();
                     return restaurante.getMenu();
                 })
-                .orElseThrow(() -> new RestauranteNoEncontradoException(
-                        "Restaurante no encontrado con ID: " + restauranteId
-                ));
+                .orElse(List.of());
     }
 
     @Override

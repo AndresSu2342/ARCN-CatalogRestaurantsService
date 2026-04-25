@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-    
+
     /**
      * Maneja excepciones de validación
      */
@@ -25,24 +25,27 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex,
             WebRequest request) {
-        
+
         String detalles = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
-        
+        String ruta = request.getDescription(false).replace("uri=", "");
+        if (ruta.isEmpty()) {
+            ruta = "/";
+        }
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .mensaje("Error de validación")
                 .detalle(detalles)
                 .timestamp(LocalDateTime.now())
-                .ruta(request.getDescription(false).replace("uri=", ""))
+                .ruta(ruta)
                 .build();
-        
+
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-    
+
     /**
      * Maneja excepciones de restaurante no encontrado
      */
@@ -50,18 +53,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleRestauranteNoEncontrado(
             RestauranteNoEncontradoException ex,
             WebRequest request) {
-        
+        String ruta = request.getDescription(false).replace("uri=", "");
+        if (ruta.isEmpty()) {
+            ruta = "/";
+        }
+
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.NOT_FOUND.value())
                 .mensaje("Recurso no encontrado")
                 .detalle(ex.getMessage())
                 .timestamp(LocalDateTime.now())
-                .ruta(request.getDescription(false).replace("uri=", ""))
+                .ruta(ruta)
                 .build();
-        
+
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
-    
+
     /**
      * Maneja excepciones genéricas
      */
@@ -69,18 +76,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIllegalArgument(
             IllegalArgumentException ex,
             WebRequest request) {
-        
+        String ruta = request.getDescription(false).replace("uri=", "");
+        if (ruta.isEmpty()) {
+            ruta = "/";
+        }
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .mensaje("Solicitud inválida")
                 .detalle(ex.getMessage())
                 .timestamp(LocalDateTime.now())
-                .ruta(request.getDescription(false).replace("uri=", ""))
+                .ruta(ruta)
                 .build();
-        
+
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-    
+
     /**
      * Maneja todas las otras excepciones
      */
@@ -88,17 +98,22 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex,
             WebRequest request) {
-        
+
         log.error("Error no manejado", ex);
-        
+
+        String detalle = (ex.getMessage() != null) ? ex.getMessage() : "Datos inválidos";
+        String ruta = request.getDescription(false).replace("uri=", "");
+        if (ruta.isEmpty()) {
+            ruta = "/";
+        }
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .mensaje("Error interno del servidor")
-                .detalle(ex.getMessage())
+                .detalle(detalle) // <-- FIX
                 .timestamp(LocalDateTime.now())
-                .ruta(request.getDescription(false).replace("uri=", ""))
+                .ruta(ruta)
                 .build();
-        
+
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
