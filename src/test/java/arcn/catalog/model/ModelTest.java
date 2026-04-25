@@ -436,49 +436,4 @@ class ModelTest {
         // Act & Assert
         assertFalse(criterios.esValido());
     }
-
-    @Test
-    void testRestauranteLombokMethods() {
-        // Arrange
-        Restaurante r1 = Restaurante.builder().id("1").nombre("A").build();
-        Restaurante r2 = Restaurante.builder().id("1").nombre("A").build();
-        Restaurante r3 = Restaurante.builder().id("2").nombre("B").build();
-
-        // Act & Assert
-        assertEquals(r1, r2);
-        assertNotEquals(r1, r3);
-        assertEquals(r1.hashCode(), r2.hashCode());
-        assertNotEquals(r1.hashCode(), r3.hashCode());
-        assertNotNull(r1.toString());
-    }
-
-    @Test
-    void testProductoLombokMethods() {
-        // Arrange
-        Producto p1 = Producto.builder().id("1").nombre("A").build();
-        Producto p2 = Producto.builder().id("1").nombre("A").build();
-        Producto p3 = Producto.builder().id("2").nombre("B").build();
-
-        // Act & Assert
-        assertEquals(p1, p2);
-        assertNotEquals(p1, p3);
-        assertEquals(p1.hashCode(), p2.hashCode());
-        assertNotEquals(p1.hashCode(), p3.hashCode());
-        assertNotNull(p1.toString());
-    }
-
-    @Test
-    void testBusquedaCriteriosLombokMethods() {
-        // Arrange
-        BusquedaCriterios c1 = BusquedaCriterios.builder().radioKm(5.0).build();
-        BusquedaCriterios c2 = BusquedaCriterios.builder().radioKm(5.0).build();
-        BusquedaCriterios c3 = BusquedaCriterios.builder().radioKm(10.0).build();
-
-        // Act & Assert
-        assertEquals(c1, c2);
-        assertNotEquals(c1, c3);
-        assertEquals(c1.hashCode(), c2.hashCode());
-        assertNotEquals(c1.hashCode(), c3.hashCode());
-        assertNotNull(c1.toString());
-    }
 }

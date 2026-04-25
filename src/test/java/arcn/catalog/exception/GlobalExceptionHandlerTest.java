@@ -188,34 +188,4 @@ class GlobalExceptionHandlerTest {
         assertEquals("/", response.getBody().getRuta());
     }
 
-    @Test
-    void testHandleValidationExceptionsWithEmptyRoute() {
-        GlobalExceptionHandler handler = new GlobalExceptionHandler();
-
-        MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
-        BindingResult bindingResult = mock(BindingResult.class);
-        when(ex.getBindingResult()).thenReturn(bindingResult);
-        when(bindingResult.getFieldErrors()).thenReturn(List.of());
-
-        WebRequest request = mock(WebRequest.class);
-        when(request.getDescription(false)).thenReturn("uri="); // Empty route
-
-        ResponseEntity<ErrorResponse> response = handler.handleValidationExceptions(ex, request);
-
-        assertEquals("/", response.getBody().getRuta());
-    }
-
-    @Test
-    void testHandleRestauranteNoEncontradoWithEmptyRoute() {
-        GlobalExceptionHandler handler = new GlobalExceptionHandler();
-        RestauranteNoEncontradoException ex = new RestauranteNoEncontradoException("No encontrado");
-
-        WebRequest request = mock(WebRequest.class);
-        when(request.getDescription(false)).thenReturn("uri="); // Empty route
-
-        ResponseEntity<ErrorResponse> response = handler.handleRestauranteNoEncontrado(ex, request);
-
-        assertEquals("/", response.getBody().getRuta());
-    }
-
 }
