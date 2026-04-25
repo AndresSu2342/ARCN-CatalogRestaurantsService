@@ -324,4 +324,140 @@ class RestauranteServiceImplTest {
 
         verify(restauranteRepository).findByActivo(true);
     }
-}
+
+    @Test
+    void testActualizarRestauranteReturnsUpdatedDtoWhenRestauranteExists() {
+        // Arrange
+        String id = "1";
+        when(restauranteRepository.findById(id)).thenReturn(Optional.of(restaurante));
+        when(restauranteRepository.save(any(Restaurante.class))).thenReturn(restaurante);
+        when(mapperService.convertirADTO(any(Restaurante.class))).thenReturn(restauranteDTO);
+
+        // Act
+        Optional<RestauranteDTO> resultado = restauranteService.actualizarRestaurante(id, restauranteDTO);
+
+        // Assert
+        assertTrue(resultado.isPresent());
+        assertEquals(restauranteDTO.getNombre(), resultado.get().getNombre());
+        verify(restauranteRepository).findById(id);
+        verify(restauranteRepository).save(any(Restaurante.class));
+    }
+
+    @Test
+    void testActualizarRestauranteReturnsEmptyWhenRestauranteDoesNotExist() {
+        // Arrange
+        String id = "999";
+        when(restauranteRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act
+        Optional<RestauranteDTO> resultado = restauranteService.actualizarRestaurante(id, restauranteDTO);
+
+        // Assert
+        assertTrue(resultado.isEmpty());
+        verify(restauranteRepository).findById(id);
+        verify(restauranteRepository, never()).save(any(Restaurante.class));
+    }
+
+    @Test
+    void testDesactivarRestauranteReturnsFalseWhenRestauranteDoesNotExist() {
+        // Arrange
+        String id = "999";
+        when(restauranteRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act
+        boolean resultado = restauranteService.desactivarRestaurante(id);
+
+        // Assert
+        assertFalse(resultado);
+        verify(restauranteRepository).findById(id);
+        verify(restauranteRepository, never()).save(any(Restaurante.class));
+    }
+
+    @Test
+    void testObtenerMenuDelRestauranteReturnsEmptyListWhenRestauranteDoesNotExist() {
+        // Arrange
+        String id = "999";
+        when(restauranteRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act
+        List<Producto> resultado = restauranteService.obtenerMenuDelRestaurante(id);
+
+        // Assert
+        assertNotNull(resultado);
+        assertTrue(resultado.isEmpty());
+        verify(restauranteRepository).findById(id);
+    }
+
+    @Test
+    void testAgregarProductoAlMenuReturnsEmptyWhenRestauranteDoesNotExist() {
+        // Arrange
+        String id = "999";
+        when(restauranteRepository.findById(id)).thenReturn(Optional.empty());
+
+        // Act
+        Optional<RestauranteDTO> resultado = restauranteService.agregarProductoAlMenu(id, producto);
+
+        // Assert
+        assertTrue(resultado.isEmpty());
+        verify(restauranteRepository).findById(id);
+        verify(restauranteRepository, never()).save(any(Restaurante.class));
+    }
+
+    @Test
+    void testBuscarRestaurantesCercanosFiltersByCategoriaEvenIfBlank() {
+        // Arrange
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(40.7128)
+                .longitudUsuario(-74.0060)
+                .radioKm(5.0)
+                .hora(LocalTime.of(12, 0))
+                .categoria("   ") // Blank
+                .build();
+        when(restauranteRepository.findByActivo(true)).thenReturn(List.of(restaurante));
+        when(mapperService.convertirADTO(any(Restaurante.class))).thenReturn(restauranteDTO);
+
+        // Act
+        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criterios);
+
+        // Assert
+        assertFalse(resultado.isEmpty());
+        verify(restauranteRepository).findByActivo(true);
+    }
+
+    @Test
+    void testBuscarRestaurantesCercanosFiltersByCalificacionMinimaWhenZeroOrLess() {
+        // Arrange
+        BusquedaCriterios criterios = BusquedaCriterios.builder()
+                .latitudUsuario(40.7128)
+                .longitudUsuario(-74.0060)
+                .radioKm(5.0)
+                .hora(LocalTime.of(12, 0))
+                .calificacionMinima(0.0) // Zero
+                .build();
+        when(restauranteRepository.findByActivo(true)).thenReturn(List.of(restaurante));
+        when(mapperService.convertirADTO(any(Restaurante.class))).thenReturn(restauranteDTO);
+
+        // Act
+        List<RestauranteDTO> resultado = restauranteService.buscarRestaurantesCercanos(criterios);
+
+        // Assert
+        assertFalse(resultado.isEmpty());
+        verify(restauranteRepository).findByActivo(true);
+    }
+
+    @Test
+    void testObtenerRestaurantePorIdReturnsEmptyWhenRestauranteIsInactive() {
+        // Arrange
+        String id = "1";
+        restaurante.setActivo(false);
+        when(restauranteRepository.findById(id)).thenReturn(Optional.of(restaurante));
+
+        // Act
+        Optional<RestauranteDTO> resultado = restauranteService.obtenerRestaurantePorId(id);
+
+        // Assert
+        assertTrue(resultado.isEmpty());
+        verify(restauranteRepository).findById(id);
+        verify(mapperService, never()).convertirADTO(any(Restaurante.class));
+    }
+}

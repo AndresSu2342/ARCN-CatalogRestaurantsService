@@ -364,4 +364,76 @@ class ModelTest {
         assertEquals(60.0, construido.getLongitudUsuario());
         assertEquals(10.0, construido.getRadioKm());
     }
+
+    @Test
+    void testRestauranteEsInvalidoWhenNombreIsBlank() {
+        // Arrange
+        restaurante.setNombre("   ");
+
+        // Act & Assert
+        assertFalse(restaurante.esValido());
+    }
+
+    @Test
+    void testRestauranteEsInvalidoWhenDireccionIsBlank() {
+        // Arrange
+        restaurante.setDireccion("   ");
+
+        // Act & Assert
+        assertFalse(restaurante.esValido());
+    }
+
+    @Test
+    void testRestauranteEsInvalidoWhenLongitudIsNull() {
+        // Arrange
+        restaurante.setLongitud(null);
+
+        // Act & Assert
+        assertFalse(restaurante.esValido());
+    }
+
+    @Test
+    void testRestauranteEsInvalidoWhenHoraCierreIsNull() {
+        // Arrange
+        restaurante.setHoraCierre(null);
+
+        // Act & Assert
+        assertFalse(restaurante.esValido());
+    }
+
+    @Test
+    void testProductoEsInvalidoWhenNombreIsNull() {
+        // Arrange
+        producto.setNombre(null);
+
+        // Act & Assert
+        assertFalse(producto.esValido());
+    }
+
+    @Test
+    void testProductoEsInvalidoWhenPrecioIsNull() {
+        // Arrange
+        producto.setPrecio(null);
+
+        // Act & Assert
+        assertFalse(producto.esValido());
+    }
+
+    @Test
+    void testBusquedaCriteriosEsInvalidoWhenRadioKmIsNull() {
+        // Arrange
+        criterios.setRadioKm(null);
+
+        // Act & Assert
+        assertFalse(criterios.esValido());
+    }
+
+    @Test
+    void testBusquedaCriteriosEsInvalidoWhenHoraIsNull() {
+        // Arrange
+        criterios.setHora(null);
+
+        // Act & Assert
+        assertFalse(criterios.esValido());
+    }
 }
